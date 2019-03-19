@@ -34,6 +34,12 @@ namespace ComputePiAsynch
             stop.Stop();
             Console.WriteLine($"Pi={pi3} (parallel comp in {stop.ElapsedMilliseconds} ms)");
 
+            //parallel computation 2
+            stop.Restart();
+            var pi4 = ram.ComputePiParallel2();
+            stop.Stop();
+            Console.WriteLine($"Pi={pi4} (parallel comp 2 in {stop.ElapsedMilliseconds} ms)");
+
             Console.ReadKey();
         }
     }
@@ -61,6 +67,27 @@ namespace ComputePiAsynch
         }
 
         public double ComputePiParallel()
+        {
+            var sum = 0.0;
+            var step = 1e-9;
+            object lockObject = new object();
+
+            Parallel.For(1, 1000000000, () => 0.0, (i, state, partialResult) =>
+            {
+                var x = (i + 0.5) * step;
+                return partialResult + 4.0 / (1.0 + x * x);
+            },
+                localPartialSum =>
+                {
+                    lock (lockObject)
+                    {
+                        sum += localPartialSum;
+                    }
+                });
+            return step * sum;
+        }
+
+        public double ComputePiParallel2()  //more performant
         {
             var sum = 0.0;
             var step = 1e-9;
